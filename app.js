@@ -31,12 +31,13 @@ let calculateLayout = function(parts, materialWidth, totalQuantity) {
 	let partImages = [];
 	let Inches = 0; // need better name
 	for(let i = 0; i < parts.length; i++) {
-		let currentLength = 0;
+		let currentLength = 100000;
 		let quantity = parts[i].Quantity;
 
 		if(quantity > 0) {
 			let currentWidth = materialWidth;	
 			let usageCalculations = calculatePartLayout(currentLength, currentWidth, parts[i].Length, parts[i].Width, quantity);
+			partImages.push(usageCalculations.partImages);
 		}
 	}
 
@@ -63,6 +64,7 @@ let calculatePartLayout = function(currentLength, currentWidth, partLength, part
 	let remainingWidth1 = 0;
 	let remainingArea1 = 0;
 	let remainingQuantity1 = 0;
+
 	if(qtyLength1 > 0 && qtyWidth1 > 0) {
 		let qtyPartsAcrossMaterialWidth = 1;
 		if(quantity > qtyLength1) {
@@ -78,7 +80,7 @@ let calculatePartLayout = function(currentLength, currentWidth, partLength, part
 			qtyPartsAcrossMaterialLength = qtyWidth1;
 		}
 
-		if(currentLength === 0) {
+		if(currentLength === 100000) {
 			remainingLength1 = partWidth * qtyPartsAcrossMaterialLength;
 			remainingQuantity1 = quantity * qtyLength1;
 			qtyWidth1 = quantity;
@@ -119,7 +121,7 @@ let calculatePartLayout = function(currentLength, currentWidth, partLength, part
 			qtyPartsAcrossMaterialLength = qtyWidth2;
 		}
 
-		if(currentLength === 0) {
+		if(currentLength === 100000) {
 			remainingLength2 = partWidth * qtyPartsAcrossMaterialLength;
 			remainingQuantity2 = quantity * qtyLength2;
 			qtyWidth2 = quantity;
@@ -141,14 +143,16 @@ let calculatePartLayout = function(currentLength, currentWidth, partLength, part
 		currentWidth = remainingWidth1;
 
 	} else {
-
+		currentLength = remainingLength2;
+		currentWidth = remainingWidth2;
 	}
 
 	console.log(currentLength, currentWidth);
 	return {
 		currentLength: currentLength,
 		currentWidth: currentWidth,
-		remainingLength: remainingLength
+		remainingLength: remainingLength,
+		//partImages: partImages
 	}
 }
 
