@@ -52,16 +52,13 @@ let calculateLayout = function(parts, materialLength, materialWidth, unusableMat
 		let remainingPartQuantity = parts[i].Quantity;
 
 		for(let j = 0; j < materialAreas.length; j++) {
-			const currentMaterialLength = materialAreas[j].length;
-			const currentMaterialWidth = materialAreas[j].width;
-
 			// calculate how many parts fit in the given area
 			// return hash should contain
 			// {
 			// 	remainingPartQuantity // This should be updated based on how many were actually taken
-			// 	newMaterialAreas // This will be any leftover space from the original are that was used. Could be more than one.
+			// 	newMaterialAreas // This will be any leftover space from the original are that was unused. Could be more than one.
 			// }
-			let usageCalculations = calculatePartLayout(currentMaterialLength, currentMaterialWidth, partLength, partWidth, remainingPartQuantity);
+			let usageCalculations = calculatePartLayout(materialAreas[j], partLength, partWidth, remainingPartQuantity);
 			
 
 
@@ -80,7 +77,10 @@ let calculateLayout = function(parts, materialLength, materialWidth, unusableMat
 	}		
 }
 
-let calculatePartLayout = function(materialLength, materialWidth, partLength, partWidth, partQuantity) {
+let calculatePartLayout = function(materialArea, partLength, partWidth, partQuantity) {
+	const materialLength = materialArea.length;
+	const materialWidth = materialArea.width;
+
 	const numberOutWidth = Math.floor(materialWidth / partWidth);
 	const numberOutWidthFlipped = Math.floor(materialWidth / partLength);
 
