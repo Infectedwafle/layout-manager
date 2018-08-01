@@ -3,23 +3,23 @@ let ctx = canvas.getContext("2d");
 
 let start = function() {
 	let parts = [
-		{
-			Id: 1,
-			Length: 21.35,
-			Width: 15,
-			Quantity: 5
-		},
+		// {
+		// 	Id: 1,
+		// 	Length: 20.875,
+		// 	Width: 2.125,
+		// 	Quantity: 2
+		// },
 		{
 			Id: 2,
 			Length: 22.38,
 			Width: 15,
-			Quantity: 3
+			Quantity: 6
 		},
 		{
 			Id: 3,
 			Length: 22.38,
 			Width: 21.35,
-			Quantity: 10
+			Quantity: 6
 		},
 		{
 			Id: 4,
@@ -33,25 +33,28 @@ let start = function() {
 			Width: 3.27,
 			Quantity: 9
 		},
+		// {
+		// 	Id: 6,
+		// 	Length: 12,
+		// 	Width: 1,
+		// 	Quantity: 11
+		// },
 		{
-			Id: 6,
-			Length: 12,
-			Width: 1,
-			Quantity: 11
-		},
-		{
-			Id: 6,
-			Length: .75,
-			Width: .25,
-			Quantity: 250
+			Id: 7,
+			Length: 1,
+			Width: 2,
+			Quantity: 150
 		}
 	];
-	let materialWidth = 35;
-	let materialLength = null;
+
+	let materialWidth = 56;
+	let materialLength = 108;
 	let totalQuantity = 1;
-	const distanceBetweenParts = 0;
+	const distanceBetweenPartsLength = .1;
+	const distanceBetweenPartsWidth = .1;
 	const unusableMaterialLength = 1;
 	const unusableMaterialWidth = 1;
+	const corrugationDirection = "H";
 	parts = parts.sort((a, b) => {
 		let areaA = a.Length * a.Width;
 		let areaB = b.Length * b.Width;
@@ -67,20 +70,34 @@ let start = function() {
 		return 0;
 	});
 
-	calculateLayout(parts, materialLength, materialWidth, unusableMaterialLength, unusableMaterialWidth, totalQuantity);
+	calculateLayout(parts, materialLength, materialWidth, unusableMaterialLength, unusableMaterialWidth, distanceBetweenPartsLength, distanceBetweenPartsWidth, corrugationDirection);
 }
 
-let calculateLayout = function(parts, originalMaterialLength, originalMaterialWidth, unusableMaterialLength, unusableMaterialWidth, totalQuantity) {
-	const materialWidth = originalMaterialWidth - unusableMaterialLength; // outside inch is unusable
-	const materialLength = (originalMaterialLength || 100000) - unusableMaterialWidth;
-	let currentLengthIndex = 0	
-	let currentWidthIndex = 0
+let calculateLayout = function(parts, originalMaterialLength, originalMaterialWidth, unusableMaterialLength, unusableMaterialWidth, distanceBetweenPartsLength,distanceBetweenPartsWidth, corrugationDirection) {
+	const totalTrimLength = 2 * unusableMaterialLength;
+	const totalTrimWidth = 2 * unusableMaterialWidth;
+	const totalPartSpacingLength = 2 * distanceBetweenPartsLength;
+	const totalPartSpacingWidth = 2 * distanceBetweenPartsWidth;
+
+	const materialWidth = originalMaterialWidth - totalTrimWidth; // remove trim
+	const materialLength = (originalMaterialLength || 100000) - totalTrimLength;
+	let currentLengthIndex = 0;
+	let currentWidthIndex = 0;
 
 	// create an out line of the material all other parts will reside inside this part
 	// We will split the initial material everytime a void is made in the material to try and use later
 	let materialAreas = [{
 		x:0, 
 		y:0, 
+		length: materialLength + totalTrimLength, 
+		width: originalMaterialWidth,
+		color: "orange",
+		type: "trim",
+		used: true,
+		parts: []
+	}, {
+		x:unusableMaterialLength, 
+		y:unusableMaterialWidth, 
 		length: materialLength, 
 		width: materialWidth,
 		color: "red",
@@ -92,9 +109,10 @@ let calculateLayout = function(parts, originalMaterialLength, originalMaterialWi
 	
 	for(let i = 0; i < parts.length; i++) {
 		console.log('*************************************************************************', parts[i].Id);
-		const partLength = parts[i].Length;
-		const partWidth = parts[i].Width;
-		let remainingPartQuantity = parts[i].Quantity;
+		const partLength = parts[i].Length + totalPartSpacingLength;
+		const partWidth = parts[i].Width + totalPartSpacingWidth;
+		const partQuantity = parts[i].Quantity;
+		let remainingPartQuantity = partQuantity || 1;
 		let layoutCalculations = null;
 
 		for(let j = 0; j < materialAreas.length; j++) {
@@ -105,9 +123,8 @@ let calculateLayout = function(parts, originalMaterialLength, originalMaterialWi
 				// 	remainingPartQuantity // This should be updated based on how many were actually taken
 				// 	newMaterialAreas 	  // This will be any leftover space from the original are that was unused. Could be more than one.
 				// }
-				layoutCalculations = calculateMaterialAreaLayout(materialAreas[j], partLength, partWidth, remainingPartQuantity);
+				layoutCalculations = calculateMaterialAreaLayout(materialAreas[j], partLength, partWidth, remainingPartQuantity, totalPartSpacingLength, totalPartSpacingWidth, corrugationDirection);
 
-				console.log('Tried Material', materialAreas[j].length, materialAreas[j].width);
 				if(layoutCalculations.newMaterialAreas.length > 0) {
 					materialAreas.splice(j, 1);
 					
@@ -119,11 +136,12 @@ let calculateLayout = function(parts, originalMaterialLength, originalMaterialWi
 							let areaA = a.length * a.width;
 							let areaB = b.length * b.width;
 
-							if(areaA < areaB) {
+							// make sure material trim is always drawn first
+							if(a.x < b.x || a.type === 'trim') {
 								return -1;
 							}
 
-							if(areaA > areaB) {
+							if(a.x > b.x) {
 								return 1;
 							}
 
@@ -131,7 +149,11 @@ let calculateLayout = function(parts, originalMaterialLength, originalMaterialWi
 						});
 					}
 
-					remainingPartQuantity = layoutCalculations.remainingPartQuantity;
+					if(partQuantity === null) {
+						remainingPartQuantity = 1
+					} else {
+						remainingPartQuantity = layoutCalculations.remainingPartQuantity;
+					}
 					
 					if(remainingPartQuantity > 0) {
 						j = 0; // start over
@@ -155,7 +177,7 @@ let calculateLayout = function(parts, originalMaterialLength, originalMaterialWi
 	draw(images);
 }
 
-let calculateMaterialAreaLayout = function(materialArea, partLength, partWidth, partQuantity) {
+let calculateMaterialAreaLayout = function(materialArea, partLength, partWidth, partQuantity, distanceBetweenPartsLength, distanceBetweenPartsWidth, corrugationDirection) {
 	console.log('----------------------------------------------------------------------------');
 	// store the length and width of the material area
 	const materialLength = materialArea.length;
@@ -163,27 +185,40 @@ let calculateMaterialAreaLayout = function(materialArea, partLength, partWidth, 
 	let parts = [];
 
 	// calculate the number out across the width of the material using the part width
-	const numberOutWidth = Math.floor(materialWidth / partWidth);
+	const numberOutWidthMax = Math.floor(materialWidth / partWidth);
+	const numberOutWidth = Math.min(partQuantity, numberOutWidthMax);
+
 	// calculate the number out across the width of the material using the part height
-	const numberOutWidthFlipped = Math.floor(materialWidth / partLength);
+	const numberOutWidthFlippedMax = Math.floor(materialWidth / partLength);
+	const numberOutWidthFlipped = Math.min(partQuantity, numberOutWidthFlippedMax);
+
 
 	// Calculate how many time the number out width can be done in the length direction
 	// ex. if you can get 3 out of the width and 2 the length that would be 6 parts total
 	const numberOutLengthFullMax = Math.floor(partQuantity / numberOutWidth);
-	const numberOutLengthFull = Math.min(numberOutLengthFullMax, Math.floor(materialLength / partLength));
+	let numberOutLengthFull = Math.min(numberOutLengthFullMax, Math.floor(materialLength / partLength));
+
+	if(numberOutLengthFull === 0 && numberOutWidth > 0 && partLength <= materialLength) {
+		numberOutLengthFull = 1;
+	}
 
 	const numberOutLengthFullFlippedMax = Math.floor(partQuantity / numberOutWidthFlipped);
-	const numberOutLengthFullFlipped = Math.min(numberOutLengthFullFlippedMax, Math.floor(materialLength / partWidth));
+	let numberOutLengthFullFlipped = Math.min(numberOutLengthFullFlippedMax, Math.floor(materialLength / partWidth));
+
+	if(numberOutLengthFullFlipped === 0 && numberOutWidthFlipped > 0 && partWidth <= materialLength) {
+		numberOutLengthFullFlipped = 1;
+	}
 
 	const remainingPartQuantity = partQuantity - (numberOutWidth * numberOutLengthFull);
 	const remainingPartQuantityFlipped = partQuantity - (numberOutWidthFlipped * numberOutLengthFullFlipped);
 
-	console.log("materialLength: ", materialLength);
-	console.log("materialWidth: ", materialWidth);
-	console.log("numberOutWidth: ", numberOutWidth);
-	console.log("numberOutLengthFull: ", numberOutLengthFull, numberOutLengthFullMax);
-	console.log("numberOutWidthFlipped: ", numberOutWidthFlipped);
-	console.log("numberOutLengthFullFlipped: ", numberOutLengthFullFlipped, numberOutLengthFullFlippedMax);
+	// console.log("materialLength: ", materialLength);
+	// console.log("materialWidth: ", materialWidth);
+	// console.log("partQuantity: ", partQuantity);
+	// console.log("numberOutWidth: ", numberOutWidth);
+	// console.log("numberOutLengthFull: ", numberOutLengthFull, numberOutLengthFullMax);
+	// console.log("numberOutWidthFlipped: ", numberOutWidthFlipped);
+	// console.log("numberOutLengthFullFlipped: ", numberOutLengthFullFlipped, numberOutLengthFullFlippedMax);
 
 	let scrap = 0;
 
@@ -191,42 +226,51 @@ let calculateMaterialAreaLayout = function(materialArea, partLength, partWidth, 
 	let finalPartLength = 0;
 	let finalPartWidth = 0;
 	let finalRemainingQuantity = 0;
+	let finalPartSpacingLength = 0;
+	let finalPartSpacingWidth = 0;
 
 	let numberOutNormal = numberOutWidth * numberOutLengthFull;
 	let numberOutflipped = numberOutWidthFlipped * numberOutLengthFullFlipped;
 
-	if(numberOutNormal > numberOutflipped || (isNaN(numberOutflipped) && !isNaN(numberOutNormal)) || numberOutflipped === 0) {
+	console.log(corrugationDirection);
+	if((numberOutNormal > numberOutflipped || (isNaN(numberOutflipped) && !isNaN(numberOutNormal)) || numberOutflipped === 0) && corrugationDirection !== 'V' && partLength <= materialWidth || corrugationDirection === 'H') {
 		numberOutFinal = numberOutWidth * numberOutLengthFull;
 		finalPartLength = partLength;
 		finalPartWidth = partWidth;
 		finalRemainingQuantity = remainingPartQuantity;
-	} else if(numberOutflipped > numberOutNormal || (!isNaN(numberOutflipped) && isNaN(numberOutNormal)) || numberOutNormal === 0){
+		finalPartSpacingLength = distanceBetweenPartsLength;
+		finalPartSpacingWidth = distanceBetweenPartsWidth;
+	} else if((numberOutflipped > numberOutNormal || (!isNaN(numberOutflipped) && isNaN(numberOutNormal)) || numberOutNormal === 0) && corrugationDirection !== 'H' && partLength <= materialWidth || corrugationDirection === 'V'){
 		numberOutFinal = numberOutWidthFlipped * numberOutLengthFullFlipped;
 		finalPartLength = partWidth;
 		finalPartWidth = partLength;
 		finalRemainingQuantity = remainingPartQuantityFlipped;
+		finalPartSpacingLength = distanceBetweenPartsWidth;
+		finalPartSpacingWidth = distanceBetweenPartsLength;
 	} else {
-		numberOutFinal = numberOutWidth * numberOutLengthFull;
-		finalPartLength = partLength;
-		finalPartWidth = partWidth;
-		finalRemainingQuantity = remainingPartQuantity;
+		// numberOutFinal = numberOutWidth * numberOutLengthFull;
+		// finalPartLength = partLength;
+		// finalPartWidth = partWidth;
+		// finalRemainingQuantity = remainingPartQuantity;
+		// finalPartSpacingLength = distanceBetweenPartsLength;
+		// finalPartSpacingWidth = distanceBetweenPartsWidth;
 	}
 
 
-	console.log("NumberOutFinal: ", numberOutFinal);
-	console.log("FinalPartLength: ", finalPartLength);
-	console.log("FinalPartWidth: ", finalPartWidth);
-	console.log("FinalRemainingQuantity: ", finalRemainingQuantity);
+	// console.log("NumberOutFinal: ", numberOutFinal);
+	// console.log("FinalPartLength: ", finalPartLength);
+	// console.log("FinalPartWidth: ", finalPartWidth);
+	// console.log("FinalRemainingQuantity: ", finalRemainingQuantity);
 	
 	// relative to the material area makes the math easier
 	let currentX = materialArea.x;
 	let currentY = materialArea.y;
 	for(let i = 0; i < numberOutFinal; i++) {
 		materialArea.parts.push({
-			x: currentX,
-			y: currentY,
-			length: finalPartLength,
-			width: finalPartWidth,
+			x: currentX + (finalPartSpacingLength / 2),
+			y: currentY + (finalPartSpacingWidth / 2),
+			length: finalPartLength - (finalPartSpacingLength),
+			width: finalPartWidth - (finalPartSpacingWidth),
 			color: 'black',
 			type: 'part'
 		});
@@ -237,7 +281,9 @@ let calculateMaterialAreaLayout = function(materialArea, partLength, partWidth, 
 				currentY += finalPartWidth;
 			} else {
 				currentY = materialArea.y;
-				currentX += finalPartLength
+				if((currentX - materialArea.x) + (2 * finalPartLength) <= materialLength) {
+					currentX += finalPartLength
+				}
 			}
 		}
 	}
@@ -245,7 +291,7 @@ let calculateMaterialAreaLayout = function(materialArea, partLength, partWidth, 
 
 	let materialAreas = [];
 	if(numberOutFinal > 0) {		
-		materialAreas = calculateNewMaterialAreas(materialArea, currentX + finalPartLength, currentY + finalPartWidth);
+		materialAreas = calculateNewMaterialAreas(materialArea, currentX + finalPartLength, currentY + finalPartWidth, finalPartSpacingLength, finalPartSpacingWidth);
 	}
 
 	return {
@@ -261,7 +307,7 @@ let calculateMaterialAreaLayout = function(materialArea, partLength, partWidth, 
  * @param  {[type]} newMaterialWidth  new Material width relative to the overall material
  * @return {[type]}                   [description]
  */
-let calculateNewMaterialAreas = function(materialArea, newMaterialLength, newMaterialWidth) {
+let calculateNewMaterialAreas = function(materialArea, newMaterialLength, newMaterialWidth, finalPartSpacingLength, finalPartSpacingWidth) {
 	// console.log("NewMaterialLength: ", newMaterialLength);
 	// console.log("NewMaterialWidth", newMaterialWidth);
 	// console.log("MaterialArea: ", materialArea);
@@ -294,7 +340,6 @@ let calculateNewMaterialAreas = function(materialArea, newMaterialLength, newMat
 	}
 
 	// create a material area for the main material area
-	console.log("MaterialArea: ", materialArea, newMaterialLength)
 	if((newMaterialLength - materialArea.x) < materialArea.length) {
 		materialAreas.push({
 			x: newMaterialLength,
@@ -308,7 +353,6 @@ let calculateNewMaterialAreas = function(materialArea, newMaterialLength, newMat
 		});
 	}
 
-	console.log(materialAreas);
 	return materialAreas;
 }
 
@@ -322,7 +366,7 @@ let checkIfPartFitsInMaterialArea = function(materialLength, materialWidth, part
 }
 
 let draw = function(images) {
-	let scale = 10;
+	let scale = 15;
 	for(let i = 0; i < images.length; i++) {
 		if(images[i].type === 'part') {
 			ctx.fillStyle = images[i].color;
@@ -330,30 +374,26 @@ let draw = function(images) {
 			ctx.strokeStyle = 'grey';
 			ctx.strokeRect(images[i].x * scale, images[i].y * scale, images[i].length * scale, images[i].width * scale);
 		} else {
-			ctx.strokeStyle = images[i].color;
+			ctx.fillStyle = images[i].color;
+			ctx.fillRect(images[i].x * scale, images[i].y * scale, images[i].length * scale, images[i].width * scale);	
+			ctx.strokeStyle = 'black';
 			ctx.strokeRect(images[i].x * scale, images[i].y * scale, images[i].length * scale, images[i].width * scale);	
+
 		}
 	}
 }
 
 document.addEventListener('DOMContentLoaded', start(), false);
 
-document.getElementById('layout-manager').onmouseover=function(event) {
+document.getElementById('layout-manager').onclick=function(event) {
     var canvasPos = {
         x: this.offsetLeft,
         y: this.offsetTop
     };
     var coord = {
-        x: event.pageX-canvasPos.x,
-        y: event.pageY-canvasPos.y
+        x: (event.pageX-canvasPos.x) / 15,
+        y: (event.pageY-canvasPos.y) / 15
     };
 
     console.log(coord);
 };
-
-function getCursorPosition(canvas, event) {
-	var rect = canvas.getBoundingClientRect();
-	var x = event.clientX - rect.left;
-	var y = event.clientY - rect.top;
-	console.log("x: " + x + " y: " + y);
-}
