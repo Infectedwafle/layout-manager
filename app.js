@@ -5,33 +5,33 @@ let start = function() {
 	let parts = [
 		{
 			Id: 1,
-			Length: 10,
-			Width: 5,
-			Quantity: 3
+			Length: 21.35,
+			Width: 15,
+			Quantity: 5
 		},
 		{
 			Id: 2,
-			Length: 4.5,
-			Width: 1.5,
-			Quantity: 9
+			Length: 22.38,
+			Width: 15,
+			Quantity: 3
 		},
 		{
 			Id: 3,
-			Length: 2.5,
-			Width: 2.5,
-			Quantity: 6
+			Length: 22.38,
+			Width: 21.35,
+			Quantity: 10
 		},
 		{
 			Id: 4,
-			Length: 1.5,
-			Width: 3,
-			Quantity: 15
+			Length: 22.38,
+			Width: 15,
+			Quantity: 7
 		},
 		{
 			Id: 5,
-			Length: 6,
-			Width: 18,
-			Quantity: 11
+			Length: 15,
+			Width: 3.27,
+			Quantity: 9
 		},
 		{
 			Id: 6,
@@ -41,12 +41,12 @@ let start = function() {
 		},
 		{
 			Id: 6,
-			Length: 1,
-			Width: 1,
+			Length: .75,
+			Width: .25,
 			Quantity: 250
 		}
 	];
-	let materialWidth = 15;
+	let materialWidth = 35;
 	let materialLength = null;
 	let totalQuantity = 1;
 	const distanceBetweenParts = 0;
@@ -72,7 +72,7 @@ let start = function() {
 
 let calculateLayout = function(parts, originalMaterialLength, originalMaterialWidth, unusableMaterialLength, unusableMaterialWidth, totalQuantity) {
 	const materialWidth = originalMaterialWidth - unusableMaterialLength; // outside inch is unusable
-	const materialLength = (originalMaterialLength || 1000) - unusableMaterialWidth;
+	const materialLength = (originalMaterialLength || 100000) - unusableMaterialWidth;
 	let currentLengthIndex = 0	
 	let currentWidthIndex = 0
 
@@ -81,7 +81,7 @@ let calculateLayout = function(parts, originalMaterialLength, originalMaterialWi
 	let materialAreas = [{
 		x:0, 
 		y:0, 
-		length: materialLength || 100000, 
+		length: materialLength, 
 		width: materialWidth,
 		color: "red",
 		type: "material",
@@ -107,11 +107,28 @@ let calculateLayout = function(parts, originalMaterialLength, originalMaterialWi
 				// }
 				layoutCalculations = calculateMaterialAreaLayout(materialAreas[j], partLength, partWidth, remainingPartQuantity);
 
+				console.log('Tried Material', materialAreas[j].length, materialAreas[j].width);
 				if(layoutCalculations.newMaterialAreas.length > 0) {
 					materialAreas.splice(j, 1);
 					
 					if(layoutCalculations) {
 						materialAreas = materialAreas.concat(layoutCalculations.newMaterialAreas);
+
+						// sort the material areas to ensure the smallest areas are used first
+						materialAreas = materialAreas.sort((a, b) => {
+							let areaA = a.length * a.width;
+							let areaB = b.length * b.width;
+
+							if(areaA < areaB) {
+								return -1;
+							}
+
+							if(areaA > areaB) {
+								return 1;
+							}
+
+							return 0;
+						});
 					}
 
 					remainingPartQuantity = layoutCalculations.remainingPartQuantity;
@@ -124,21 +141,6 @@ let calculateLayout = function(parts, originalMaterialLength, originalMaterialWi
 				}
 			}
 		}
-
-		materialAreas = materialAreas.sort((a, b) => {
-			let areaA = a.length * a.width;
-			let areaB = b.length * b.width;
-
-			if(areaA < areaB) {
-				return -1;
-			}
-
-			if(areaA > areaB) {
-				return 1;
-			}
-
-			return 0;
-		});
 
 		
 	}		
@@ -176,6 +178,8 @@ let calculateMaterialAreaLayout = function(materialArea, partLength, partWidth, 
 	const remainingPartQuantity = partQuantity - (numberOutWidth * numberOutLengthFull);
 	const remainingPartQuantityFlipped = partQuantity - (numberOutWidthFlipped * numberOutLengthFullFlipped);
 
+	console.log("materialLength: ", materialLength);
+	console.log("materialWidth: ", materialWidth);
 	console.log("numberOutWidth: ", numberOutWidth);
 	console.log("numberOutLengthFull: ", numberOutLengthFull, numberOutLengthFullMax);
 	console.log("numberOutWidthFlipped: ", numberOutWidthFlipped);
@@ -318,7 +322,7 @@ let checkIfPartFitsInMaterialArea = function(materialLength, materialWidth, part
 }
 
 let draw = function(images) {
-	let scale = 15;
+	let scale = 10;
 	for(let i = 0; i < images.length; i++) {
 		if(images[i].type === 'part') {
 			ctx.fillStyle = images[i].color;
@@ -334,3 +338,22 @@ let draw = function(images) {
 
 document.addEventListener('DOMContentLoaded', start(), false);
 
+document.getElementById('layout-manager').onmouseover=function(event) {
+    var canvasPos = {
+        x: this.offsetLeft,
+        y: this.offsetTop
+    };
+    var coord = {
+        x: event.pageX-canvasPos.x,
+        y: event.pageY-canvasPos.y
+    };
+
+    console.log(coord);
+};
+
+function getCursorPosition(canvas, event) {
+	var rect = canvas.getBoundingClientRect();
+	var x = event.clientX - rect.left;
+	var y = event.clientY - rect.top;
+	console.log("x: " + x + " y: " + y);
+}
