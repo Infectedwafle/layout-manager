@@ -3,55 +3,68 @@ let ctx = canvas.getContext("2d");
 
 let start = function() {
 	let parts = [
-		// {
-		// 	Id: 1,
-		// 	Length: 20.875,
-		// 	Width: 2.125,
-		// 	Quantity: 2
-		// },
+		{
+			Id: 1,
+			Length: 15,
+			Width: 2.125,
+			Quantity: 2,
+			SpacingLength: null,
+			SpacingWidth: null
+		},
 		{
 			Id: 2,
 			Length: 22.38,
 			Width: 15,
-			Quantity: 6
+			Quantity: 6,
+			SpacingLength: null,
+			SpacingWidth: null
 		},
 		{
 			Id: 3,
 			Length: 22.38,
 			Width: 21.35,
-			Quantity: 6
+			Quantity: 1,
+			SpacingLength: null,
+			SpacingWidth: null
 		},
 		{
 			Id: 4,
 			Length: 22.38,
 			Width: 15,
-			Quantity: 7
+			Quantity: 7,
+			SpacingLength: null,
+			SpacingWidth: null
 		},
 		{
 			Id: 5,
 			Length: 15,
 			Width: 3.27,
-			Quantity: 9
+			Quantity: 9,
+			SpacingLength: null,
+			SpacingWidth: null
 		},
-		// {
-		// 	Id: 6,
-		// 	Length: 12,
-		// 	Width: 1,
-		// 	Quantity: 11
-		// },
+		{
+			Id: 6,
+			Length: 12,
+			Width: 1,
+			Quantity: 11,
+			SpacingLength: null,
+			SpacingWidth: null
+		},
 		{
 			Id: 7,
 			Length: 1,
 			Width: 2,
-			Quantity: 150
+			Quantity: 150,
+			SpacingLength: null,
+			SpacingWidth: null
 		}
 	];
 
 	let materialWidth = 56;
 	let materialLength = 108;
-	let totalQuantity = 1;
-	const distanceBetweenPartsLength = .1;
-	const distanceBetweenPartsWidth = .1;
+	const distanceBetweenPartsLength = .375;
+	const distanceBetweenPartsWidth = .375;
 	const unusableMaterialLength = 1;
 	const unusableMaterialWidth = 1;
 	const corrugationDirection = "H";
@@ -76,8 +89,7 @@ let start = function() {
 let calculateLayout = function(parts, originalMaterialLength, originalMaterialWidth, unusableMaterialLength, unusableMaterialWidth, distanceBetweenPartsLength,distanceBetweenPartsWidth, corrugationDirection) {
 	const totalTrimLength = 2 * unusableMaterialLength;
 	const totalTrimWidth = 2 * unusableMaterialWidth;
-	const totalPartSpacingLength = 2 * distanceBetweenPartsLength;
-	const totalPartSpacingWidth = 2 * distanceBetweenPartsWidth;
+	
 
 	const materialWidth = originalMaterialWidth - totalTrimWidth; // remove trim
 	const materialLength = (originalMaterialLength || 100000) - totalTrimLength;
@@ -109,9 +121,15 @@ let calculateLayout = function(parts, originalMaterialLength, originalMaterialWi
 	
 	for(let i = 0; i < parts.length; i++) {
 		console.log('*************************************************************************', parts[i].Id);
-		const partLength = parts[i].Length + totalPartSpacingLength;
-		const partWidth = parts[i].Width + totalPartSpacingWidth;
+		const totalPartSpacingLength = 2 * (parts[i].SpacingLength === null ? distanceBetweenPartsLength : parts[i].SpacingLength);
+		const totalPartSpacingWidth = 2 * (parts[i].SpacingWidth === null ? distanceBetweenPartsWidth : parts[i].SpacingWidth);
+
+		const partLength = parts[i].Length;
+		const partWidth = parts[i].Width;
 		const partQuantity = parts[i].Quantity;
+
+		const totalPartLenth = partLength + totalPartSpacingLength;
+		const totalPartWidth = partWidth + totalPartSpacingWidth
 		let remainingPartQuantity = partQuantity || 1;
 		let layoutCalculations = null;
 
@@ -123,7 +141,7 @@ let calculateLayout = function(parts, originalMaterialLength, originalMaterialWi
 				// 	remainingPartQuantity // This should be updated based on how many were actually taken
 				// 	newMaterialAreas 	  // This will be any leftover space from the original are that was unused. Could be more than one.
 				// }
-				layoutCalculations = calculateMaterialAreaLayout(materialAreas[j], partLength, partWidth, remainingPartQuantity, totalPartSpacingLength, totalPartSpacingWidth, corrugationDirection);
+				layoutCalculations = calculateMaterialAreaLayout(materialAreas[j], totalPartLenth, totalPartWidth, remainingPartQuantity, totalPartSpacingLength, totalPartSpacingWidth, corrugationDirection);
 
 				if(layoutCalculations.newMaterialAreas.length > 0) {
 					materialAreas.splice(j, 1);
@@ -163,18 +181,10 @@ let calculateLayout = function(parts, originalMaterialLength, originalMaterialWi
 				}
 			}
 		}
+	}
 
-		
-	}		
-	
-	images = images.concat(materialAreas);
-	images = images.concat(materialAreas.reduce((a, b) => {
-		return a.concat(b.parts);
-	}, []));
-
-	
-	console.log(images);
-	draw(images);
+	console.log(materialAreas);
+	draw(materialAreas);
 }
 
 let calculateMaterialAreaLayout = function(materialArea, partLength, partWidth, partQuantity, distanceBetweenPartsLength, distanceBetweenPartsWidth, corrugationDirection) {
@@ -248,12 +258,12 @@ let calculateMaterialAreaLayout = function(materialArea, partLength, partWidth, 
 		finalPartSpacingLength = distanceBetweenPartsWidth;
 		finalPartSpacingWidth = distanceBetweenPartsLength;
 	} else {
-		// numberOutFinal = numberOutWidth * numberOutLengthFull;
-		// finalPartLength = partLength;
-		// finalPartWidth = partWidth;
-		// finalRemainingQuantity = remainingPartQuantity;
-		// finalPartSpacingLength = distanceBetweenPartsLength;
-		// finalPartSpacingWidth = distanceBetweenPartsWidth;
+		numberOutFinal = numberOutWidth * numberOutLengthFull;
+		finalPartLength = partLength;
+		finalPartWidth = partWidth;
+		finalRemainingQuantity = remainingPartQuantity;
+		finalPartSpacingLength = distanceBetweenPartsLength;
+		finalPartSpacingWidth = distanceBetweenPartsWidth;
 	}
 
 
@@ -356,6 +366,14 @@ let calculateNewMaterialAreas = function(materialArea, newMaterialLength, newMat
 	return materialAreas;
 }
 
+/**
+ * [checkIfPartFitsInMaterialArea description]
+ * @param  {[type]} materialLength [description]
+ * @param  {[type]} materialWidth  [description]
+ * @param  {[type]} partLength     [description]
+ * @param  {[type]} partWidth      [description]
+ * @return {[type]}                [description]
+ */
 let checkIfPartFitsInMaterialArea = function(materialLength, materialWidth, partLength, partWidth) {
 	let partFits = true;
 	//partFits = partFits && ((materialLength - partLength) > 0 && (materialLength - partWidth) > 0);
@@ -365,20 +383,45 @@ let checkIfPartFitsInMaterialArea = function(materialLength, materialWidth, part
 	return partFits;
 }
 
-let draw = function(images) {
-	let scale = 15;
-	for(let i = 0; i < images.length; i++) {
-		if(images[i].type === 'part') {
-			ctx.fillStyle = images[i].color;
-			ctx.fillRect(images[i].x * scale, images[i].y * scale, images[i].length * scale, images[i].width * scale);
-			ctx.strokeStyle = 'grey';
-			ctx.strokeRect(images[i].x * scale, images[i].y * scale, images[i].length * scale, images[i].width * scale);
-		} else {
-			ctx.fillStyle = images[i].color;
-			ctx.fillRect(images[i].x * scale, images[i].y * scale, images[i].length * scale, images[i].width * scale);	
-			ctx.strokeStyle = 'black';
-			ctx.strokeRect(images[i].x * scale, images[i].y * scale, images[i].length * scale, images[i].width * scale);	
+/**
+ * [calculateSplitCalculations description]
+ * @param  {[type]} materialLength [description]
+ * @param  {[type]} materialWidth  [description]
+ * @param  {[type]} partLength     [description]
+ * @param  {[type]} partWidth      [description]
+ * @param  {[type]}                [description]
+ * @return {[type]}                [description]
+ */
+let calculateSplitCalculations = function(materialLength, materialWidth, partLength, partWidth) {
 
+}
+
+let draw = function(materialAreas) {
+	materialAreas = materialAreas.sort((a, b) => {
+		if(a.x < b.x) {
+			return -1;
+		}
+
+		if(a.x > b.x) {
+			return 1;
+		}
+
+		return 0;
+	});
+
+	let scale = 15;
+	for(let i = 0; i < materialAreas.length; i++) {
+		// draw material areas
+		ctx.fillStyle = materialAreas[i].color;
+		ctx.fillRect(materialAreas[i].x * scale, materialAreas[i].y * scale, materialAreas[i].length * scale, materialAreas[i].width * scale);	
+		ctx.strokeStyle = 'black';
+		ctx.strokeRect(materialAreas[i].x * scale, materialAreas[i].y * scale, materialAreas[i].length * scale, materialAreas[i].width * scale);
+		
+		for(let j = 0; j < materialAreas[i].parts.length; j++) {
+			ctx.fillStyle = materialAreas[i].parts[j].color;
+			ctx.fillRect(materialAreas[i].parts[j].x * scale, materialAreas[i].parts[j].y * scale, materialAreas[i].parts[j].length * scale, materialAreas[i].parts[j].width * scale);
+			ctx.strokeStyle = 'grey';
+			ctx.strokeRect(materialAreas[i].parts[j].x * scale, materialAreas[i].parts[j].y * scale, materialAreas[i].parts[j].length * scale, materialAreas[i].parts[j].width * scale);
 		}
 	}
 }
