@@ -20,6 +20,7 @@ function Part(id, length, width, quantity) {
 	this.spacingBottom = null;
 	this.spacingLeft = null;
 	this.spacingRight = null;
+	this.remainingQuantity = quantity;
 }
 
 /**

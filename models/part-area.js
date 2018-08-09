@@ -40,4 +40,11 @@ PartArea.prototype.perimeter = function() {
 	return (this.lenght * 2) + (this.width * 2);
 }
 
+PartArea.prototype.draw = function(ctx, scale) {
+	ctx.fillStyle = this.color;
+	ctx.fillRect(this.x * scale, this.y * scale, this.length * scale, this.width * scale);
+	ctx.strokeStyle = 'grey';
+	ctx.strokeRect(this.x * scale, this.y * scale, this.length * scale, this.width * scale);
+}
+
 export default PartArea;
