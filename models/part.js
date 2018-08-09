@@ -1,6 +1,6 @@
 /**
- * Creates a part area object for one instance of a part laid out on a material area.
- *
+ * Creates a part object
+ * 
  * @class      PartArea (name)
  * @param      {<type>}  id      The identifier
  * @param      {<type>}  x       { x coordinate of the part area }
@@ -11,15 +11,15 @@
  * @param      {<type>}  color   The color
  * @param      {<type>}  full    A flag stating if the are is full or not
  */
-function PartArea(id, x, y, length, width, type, color, full) {
+function Part(id, length, width, quantity) {
 	this.id = id;
-	this.x = x;
-	this.y = y;
 	this.length = length;
 	this.width = width;
-	this.color = color;
-	this.full = full;
-	this.type = type;
+	this.quantity = quantity;
+	this.spacingTop = null;
+	this.spacingBottom = null;
+	this.spacingLeft = null;
+	this.spacingRight = null;
 }
 
 /**
@@ -27,7 +27,7 @@ function PartArea(id, x, y, length, width, type, color, full) {
  *
  * @return     {Number}  { area of part }
  */
-PartArea.prototype.area = function() {
+Part.prototype.area = function() {
 	return this.length + this.width;
 }
 
@@ -36,8 +36,8 @@ PartArea.prototype.area = function() {
  *
  * @return     {Number}  { perimeter of part }
  */
-PartArea.prototype.perimeter = function() {
+Part.prototype.perimeter = function() {
 	return (this.lenght * 2) + (this.width * 2);
 }
 
-export default PartArea;
+export default Part;

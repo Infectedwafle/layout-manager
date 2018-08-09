@@ -1,64 +1,19 @@
+import Part from './models/part.js';
+import PartArea from './models/part-area.js';
+import MaterialArea from './models/material-area.js';
+
 let canvas = document.getElementById('layout-manager');
 let ctx = canvas.getContext("2d");
 
 let start = function() {
 	let parts = [
-		{
-			Id: 1,
-			Length: 15,
-			Width: 2.125,
-			Quantity: 2,
-			SpacingLength: null,
-			SpacingWidth: null
-		},
-		{
-			Id: 2,
-			Length: 22.38,
-			Width: 15,
-			Quantity: 6,
-			SpacingLength: null,
-			SpacingWidth: null
-		},
-		{
-			Id: 3,
-			Length: 22.38,
-			Width: 21.35,
-			Quantity: 1,
-			SpacingLength: null,
-			SpacingWidth: null
-		},
-		{
-			Id: 4,
-			Length: 22.38,
-			Width: 15,
-			Quantity: 7,
-			SpacingLength: null,
-			SpacingWidth: null
-		},
-		{
-			Id: 5,
-			Length: 15,
-			Width: 3.27,
-			Quantity: 9,
-			SpacingLength: null,
-			SpacingWidth: null
-		},
-		{
-			Id: 6,
-			Length: 12,
-			Width: 1,
-			Quantity: 11,
-			SpacingLength: null,
-			SpacingWidth: null
-		},
-		{
-			Id: 7,
-			Length: 1,
-			Width: 2,
-			Quantity: 150,
-			SpacingLength: null,
-			SpacingWidth: null
-		}
+		new Part(1, 15, 2.125, 2),
+		new Part(2, 22.38, 15, 6),
+		new Part(3, 22.38, 21.35, 1),
+		new Part(4, 22.38, 15, 7),
+		new Part(5, 15, 3.27, 9),
+		new Part(6, 12, 1, 11),
+		new Part(7, 1, 2, 150)
 	];
 
 	let materialWidth = 56;
