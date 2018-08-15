@@ -43,10 +43,10 @@ let start = function() {
 		materialTrimBottom: 1, // Global trim option for main material can be overriden on each material if needed
 		materialTrimLeft: 1, // Global trim option for main material can be overriden on each material if needed
 		materialTrimRight: 1, // Global trim option for main material can be overriden on each material if needed
-		partDirectionOnMaterial: null // If part must be cut on material a certain orientation can be overriden on each part if needed
+		partDirectionOnMaterial: "H" // If part must be cut on material a certain orientation can be overriden on each part if needed
 	};
 
-	let material = new MaterialArea(0, 0, 108, 48, "material", "red", false, {
+	let material = new MaterialArea(0, 0, 56, 32, "material", "red", false, {
 		top: options.materialTrimTop,
 		bottom: options.materialTrimBottom,
 		left: options.materialTrimLeft,
@@ -71,14 +71,13 @@ let calculatePartLayout = function(parts, material, options) {
 		return part.remainingQuantity > 0;
 	})
 
-	console.log(part);
-	layouts = calculateMaterialAreaPartsLayout(material, part, options);
+	let layouts = calculateMaterialAreaPartsLayout(material, part, options);
 
 	layouts.forEach((layout) => {
-		newMaterialAreas = newMaterialAreas.concat(calculateMaterialAreaPartsLayout(material, part, options);)
+		newMaterialAreas = newMaterialAreas.concat(calculateMaterialAreaPartsLayout(material, part, options));
 	});
 
-	return newMaterialAreas
+	return newMaterialAreas;
 }
 
 let calculateMaterialAreaPartsLayout = function(materialArea, part, options) {
@@ -100,66 +99,7 @@ let calculateMaterialAreaPartsLayout = function(materialArea, part, options) {
 		omniLayout = calculateOmniLayout();
 	}
 
-	let scrap = 0;
-
-	let numberOutFinal = 0;
-	let finalPartLength = 0;
-	let finalPartWidth = 0;
-	let finalRemainingQuantity = 0;
-	let finalPartSpacingLength = 0;
-	let finalPartSpacingWidth = 0;
-
-	// let numberOutNormal = numberOutWidth * numberOutLengthFull;
-	// let numberOutflipped = numberOutWidthFlipped * numberOutLengthFullFlipped;
 	const finalLayout = horizontalLayout || verticalLayout || omniLayout;
-	// if((numberOutNormal > numberOutflipped || (isNaN(numberOutflipped) && !isNaN(numberOutNormal)) || numberOutflipped === 0) && corrugationDirection !== 'V' && partLength <= materialWidth || corrugationDirection === 'H') {
-	// 	numberOutFinal = numberOutWidth * numberOutLengthFull;
-	// 	finalPartLength = partLength;
-	// 	finalPartWidth = partWidth;
-	// 	finalRemainingQuantity = remainingPartQuantity;
-	// 	finalPartSpacingLength = distanceBetweenPartsLength;
-	// 	finalPartSpacingWidth = distanceBetweenPartsWidth;
-	// } else if((numberOutflipped > numberOutNormal || (!isNaN(numberOutflipped) && isNaN(numberOutNormal)) || numberOutNormal === 0) && corrugationDirection !== 'H' && partLength <= materialWidth || corrugationDirection === 'V'){
-	// 	numberOutFinal = numberOutWidthFlipped * numberOutLengthFullFlipped;
-	// 	finalPartLength = partWidth;
-	// 	finalPartWidth = partLength;
-	// 	finalRemainingQuantity = remainingPartQuantityFlipped;
-	// 	finalPartSpacingLength = distanceBetweenPartsWidth;
-	// 	finalPartSpacingWidth = distanceBetweenPartsLength;
-	// } else {
-	// 	numberOutFinal = numberOutWidth * numberOutLengthFull;
-	// 	finalPartLength = partLength;
-	// 	finalPartWidth = partWidth;
-	// 	finalRemainingQuantity = remainingPartQuantity;
-	// 	finalPartSpacingLength = distanceBetweenPartsLength;
-	// 	finalPartSpacingWidth = distanceBetweenPartsWidth;
-	// }
-	
-	// relative to the material area makes the math easier
-	let currentX = materialArea.x;
-	let currentY = materialArea.y;
-	for(let i = 0; i < numberOutFinal; i++) {
-		materialArea.parts.push({
-			x: currentX + (finalPartSpacingLength / 2),
-			y: currentY + (finalPartSpacingWidth / 2),
-			length: finalPartLength - (finalPartSpacingLength),
-			width: finalPartWidth - (finalPartSpacingWidth),
-			color: 'black',
-			type: 'part'
-		});
-
-		// don't update position on last iteration makes calculating new areas easier
-		if(i !== numberOutFinal - 1) {
-			if((currentY - materialArea.y) + (2 * finalPartWidth) <= materialWidth) {
-				currentY += finalPartWidth;
-			} else {
-				currentY = materialArea.y;
-				if((currentX - materialArea.x) + (2 * finalPartLength) <= materialLength) {
-					currentX += finalPartLength
-				}
-			}
-		}
-	}
 
 
 	let materialAreas = [];
@@ -167,10 +107,7 @@ let calculateMaterialAreaPartsLayout = function(materialArea, part, options) {
 		materialAreas = calculateNewMaterialAreas(materialArea, currentX + finalPartLength, currentY + finalPartWidth, finalPartSpacingLength, finalPartSpacingWidth);
 	}
 
-	return {
-		newMaterialAreas: materialAreas,
-		remainingPartQuantity: finalRemainingQuantity
-	}
+	return [];
 }
 
 let calculateHorizontalLayout = function(material, part, options) {
@@ -209,6 +146,46 @@ let calculateOmniLayout = function(material, part, options) {
 
 }
 
+let addPartsToMaterialArea = function(materialArea, partLength, partWidth, part, numberOut) {
+	let currentX = materialArea.x + materialArea.leftTrim;
+	let currentY = materialArea.y + materialArea.topTrim;
+
+	for(let i = 0; i < numberOut; i++) {
+		let x = currentX + part.spacingLeft;
+		let y = currentY + part.spacingTop;
+
+		materialArea.parts.push(new PartArea(x, y, partLength, partWidth, 'black', 'part', {
+			top: part.spacingTop,
+			bottom: part.spacingBottom,
+			left: part.spacingLeft,
+			right: part.spacingRight
+		}));
+
+		let nextYPosition = (y - materialArea.y) +  (2 * partWidth);
+		let nextXPosition = (x - materialArea.x) +  (2 * partLength);
+		// don't update position on last iteration makes calculating new areas easier
+		if(i !== numberOut - 1) {
+			if(nextYPosition <= materialWidth) {
+				currentY += partWidth;
+			} else {
+				y = materialArea.y + materialArea.topTrim;
+				if(nextXPosition <= materialLength) {
+					currentX += partLength
+				}
+			}
+		}
+	}
+
+	let materialAreas = [];
+	if(numberOutFinal > 0) {
+		let finalMaterialAreaLength = currentX + partLength + materialArea.rightTrim;
+		let finalMaterialAreaWidth = currentY + partWidth + materialArea.bottomTrim;
+		materialAreas = calculateNewMaterialAreas(materialArea, finalMaterialAreaLength, finalMaterialAreaWidth);
+	}
+
+	return materialAreas;
+}
+
 
 /**
  * [calculateNewMaterialAreas description]
@@ -217,7 +194,7 @@ let calculateOmniLayout = function(material, part, options) {
  * @param  {[type]} newMaterialWidth  new Material width relative to the overall material
  * @return {[type]}                   [description]
  */
-let calculateNewMaterialAreas = function(materialArea, newMaterialLength, newMaterialWidth, finalPartSpacingLength, finalPartSpacingWidth) {
+let calculateNewMaterialAreas = function(materialArea, newMaterialLength, newMaterialWidth) {
 	// console.log("NewMaterialLength: ", newMaterialLength);
 	// console.log("NewMaterialWidth", newMaterialWidth);
 	// console.log("MaterialArea: ", materialArea);

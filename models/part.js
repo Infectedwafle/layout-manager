@@ -11,15 +11,15 @@
  * @param      {<type>}  color   The color
  * @param      {<type>}  full    A flag stating if the are is full or not
  */
-function Part(id, length, width, quantity) {
+function Part(id, length, width, quantity, spacingTop, spacingBottom, spacingLeft, spacingRight) {
 	this.id = id;
 	this.length = length;
 	this.width = width;
 	this.quantity = quantity;
-	this.spacingTop = null;
-	this.spacingBottom = null;
-	this.spacingLeft = null;
-	this.spacingRight = null;
+	this.spacingTop = spacingTop;
+	this.spacingBottom = spacingBottom;
+	this.spacingLeft = spacingLeft;
+	this.spacingRight = spacingRight;
 	this.remainingQuantity = quantity;
 }
 
