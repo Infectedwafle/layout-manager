@@ -87,17 +87,20 @@ MaterialArea.prototype.draw = function(ctx, scale) {
 		ctx.fillRect(((this.x + this.length) - this.rightTrim) * scale, this.y * scale, this.rightTrim * scale, this.width * scale);
 	}
 
+	if(this.materialAreas.length > 0) {
+		for(let i = 0; i < this.materialAreas.length; i++) {
+			if(this.materialAreas[i]) {
+				this.materialAreas[i].draw(ctx, scale);
+			}
+		}
+	}
+
 	if(this.partAreas.length > 0) {
 		for(let i = 0; i < this.partAreas.length; i++) {
 			this.partAreas[i].draw(ctx, scale);
 		}
 	}
 
-	if(this.materialAreas.length > 0) {
-		for(let i = 0; i < this.materialAreas.length; i++) {
-			this.materialAreas[i].draw(ctx, scale);
-		}
-	}
 }
 
 export default MaterialArea;

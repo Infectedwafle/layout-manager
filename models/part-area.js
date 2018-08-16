@@ -11,15 +11,15 @@
  * @param      {<type>}  color   The color
  * @param      {<type>}  full    A flag stating if the are is full or not
  */
-function PartArea(id, x, y, length, width, type, color, full, trimSettings) {
+function PartArea(id, x, y, length, width, type, color, trimSettings) {
 	this.id = id;
 	this.x = x;
 	this.y = y;
 	this.length = length;
 	this.width = width;
 	this.color = color;
-	this.full = full;
 	this.type = type;
+	this.trimSettings = trimSettings;
 
 	if(trimSettings) {
 		this.trimColor = trimSettings.color;
