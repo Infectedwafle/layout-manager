@@ -18,6 +18,7 @@ function MaterialArea(x, y, length, width, type, color, full, trimSettings) {
 	this.type = type;
 	this.color = color;
 	this.full = full;
+	this.trimSettings = trimSettings;
 
 	if(trimSettings) {
 		this.trimColor = trimSettings.color;
@@ -69,30 +70,22 @@ MaterialArea.prototype.draw = function(ctx, scale) {
 
 	if(this.topTrim) {
 		ctx.fillStyle = this.trimColor;
-		ctx.fillRect(this.x * scale, this.y * scale, this.length * scale, this.topTrim * scale);
+		//ctx.fillRect(this.x * scale, this.y * scale, this.length * scale, this.topTrim * scale);
 	}
 
 	if(this.bottomTrim) {
 		ctx.fillStyle = this.trimColor;
-		ctx.fillRect(this.x * scale, ((this.y + this.width) - this.bottomTrim) * scale, this.length * scale, this.bottomTrim * scale);
+		//ctx.fillRect(this.x * scale, ((this.y + this.width) - this.bottomTrim) * scale, this.length * scale, this.bottomTrim * scale);
 	}
 
 	if(this.leftTrim) {
 		ctx.fillStyle = this.trimColor;
-		ctx.fillRect(this.x * scale, this.y * scale, this.leftTrim * scale, this.width * scale);
+		//ctx.fillRect(this.x * scale, this.y * scale, this.leftTrim * scale, this.width * scale);
 	}
 
 	if(this.rightTrim) {
 		ctx.fillStyle = this.trimColor;
-		ctx.fillRect(((this.x + this.length) - this.rightTrim) * scale, this.y * scale, this.rightTrim * scale, this.width * scale);
-	}
-
-	if(this.materialAreas.length > 0) {
-		for(let i = 0; i < this.materialAreas.length; i++) {
-			if(this.materialAreas[i]) {
-				this.materialAreas[i].draw(ctx, scale);
-			}
-		}
+		//ctx.fillRect(((this.x + this.length) - this.rightTrim) * scale, this.y * scale, this.rightTrim * scale, this.width * scale);
 	}
 
 	if(this.partAreas.length > 0) {
