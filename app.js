@@ -48,7 +48,7 @@ let sortMaterials = function(parts) {
 
 let start = function() {
 	let parts = [
-		new Part(1, 21.625, 5, null, 0, 0, 0, 0),
+		new Part(1, 21.25, 10, null, 0, 0, 0, 0),
 		// new Part(2, 5, 3, 25, 0, 0, 0, 0),
 		// new Part(3, 2, 1, 35, 0, 0, 0, 0),
 		// new Part(4, 5, 15, 2, 0, 0, 0, 0),
@@ -70,7 +70,7 @@ let start = function() {
 	};
 
 	let material = new MaterialArea(
-		materialId++, 0, 0, 56, 28, "material", "red", false, {
+		materialId++, 0, 0, 52, 42, "material", "red", false, {
 		top: options.materialTrimTop,
 		bottom: options.materialTrimBottom,
 		left: options.materialTrimLeft,
@@ -140,6 +140,7 @@ let calculatePartLayout = function(parts, material, options) {
 let calculateMaterialAreaPartsLayout = function(material, part, options) {
 	let horizontalLayout = null;
 	let verticalLayout = null;
+	let eitherLayout = null;
 	let omniLayout = null;
 
 	if(options.partDirectionOnMaterial === 'H') {
@@ -150,13 +151,18 @@ let calculateMaterialAreaPartsLayout = function(material, part, options) {
 		horizontalLayout = calculateHorizontalLayout(material, part, options);
 		verticalLayout = calculateVerticalLayout(material, part, options);
 
-		// do comparison to determine which way has the best fit
+		console.log(horizontalLayout.numberOut, verticalLayout.numberOut)
+		if(horizontalLayout.numberOut > verticalLayout.numberOut) {
+			eitherLayout = horizontalLayout;
+		} else {
+			eitherLayout = verticalLayout;
+		}
 	} else {
 		// fit parts in both ways to make them fit as tight as possible
 		omniLayout = calculateOmniLayout(material, part, options);
 	}
 
-	const finalLayout = horizontalLayout || verticalLayout || omniLayout;
+	const finalLayout = eitherLayout || horizontalLayout || verticalLayout || omniLayout;
 
 	let materialPartLayoutCalculations = addPartsToMaterialArea(material, finalLayout.partLength, finalLayout.partWidth, part, finalLayout.numberOut, options);
 	material.partAreas = materialPartLayoutCalculations.partAreas;
@@ -231,19 +237,62 @@ let calculateHorizontalLayout = function(material, part, options) {
 }
 
 let calculateVerticalLayout = function(material, part, options) {
-	// calculate the number out across the width of the material using the part height
-	const numberOutWidthFlippedMax = Math.floor(materialWidth / partLength);
-	const numberOutWidthFlipped = Math.min(partQuantity, numberOutWidthFlippedMax);
-
-	const numberOutLengthFullFlippedMax = Math.floor(partQuantity / numberOutWidthFlipped);
-	let numberOutLengthFullFlipped = Math.min(numberOutLengthFullFlippedMax, Math.floor(materialLength / partWidth));
-
-	if(numberOutLengthFullFlipped === 0 && numberOutWidthFlipped > 0 && partWidth <= materialLength) {
-		numberOutLengthFullFlipped = 1;
+	if(part.id === 1) {	
+		console.log("Calculating Vertical Layout *************************************************************************")
+		console.log("Material X: ", material.x);
+		console.log("Material Y: ", material.y);
+		console.log("Material Length: ", material.length);
+		console.log("Material Width: ", material.width);
+		console.log("Material Top Trim: ", material.topTrim);
+		console.log("Material Bottom Trim: ", material.bottomTrim);
+		
+		console.log("Part Length: ", part.length);
+		console.log("Part Width: ", part.width);
+		console.log("Part Remaining Quantity: ", part.remainingQuantity);
 	}
 
-	const remainingPartQuantity = partQuantity - (numberOutWidth * numberOutLengthFull);
-	const remainingPartQuantityFlipped = partQuantity - (numberOutWidthFlipped * numberOutLengthFullFlipped);
+	// trim and part spacing are taken out to adjust for additional space needed in the material area
+	let materialWidth = material.width - material.topTrim - material.bottomTrim;
+	let materialLength = material.length - material.leftTrim - material.rightTrim;
+
+	// part spacing is added to the part for the bottom right part of the material
+	// flipped the dimensions here as the rest of the code should be the same as the vertical layout
+	let partLength = part.width + options.partSpacingTop + options.partSpacingBottom;
+	let partWidth = part.length + options.partSpacingLeft + options.partSpacingRight;
+
+	// calculate the number out across the width of the material using the part width
+	const numberOutWidthMax = Math.floor(materialWidth / partWidth);
+	const numberOutWidth = Math.min(part.remainingQuantity, numberOutWidthMax);
+	
+	if(part.id === 1) {
+		console.log("Number Out Width Max: ", numberOutWidthMax);
+		console.log("Number Out Width: ", numberOutWidth);
+	}
+
+	const numberOutLengthFullMax = numberOutWidth > 0 ? Math.floor(part.remainingQuantity / numberOutWidth) : 0;
+	let numberOutLengthFull = Math.min(numberOutLengthFullMax, Math.floor(materialLength / partLength));
+
+	if(part.id === 1) {
+		console.log("Number Out Length Full Max: ", numberOutLengthFullMax);
+		console.log("Number Out Length Full: ", numberOutLengthFull);
+	}
+
+	if(numberOutLengthFull === 0 && numberOutWidth > 0 && partLength <= materialLength) {
+		numberOutLengthFull = 1;
+	}
+
+	if(part.id === 1) {
+		console.log("Number Out Final", numberOutWidth * numberOutLengthFull);
+	}
+
+	const remainingPartQuantity = Math.max(part.remainingQuantity - (numberOutWidth * numberOutLengthFull), 0);
+
+	return {
+		remainingQuantity: remainingPartQuantity,
+		numberOut: numberOutWidth * numberOutLengthFull,
+		partLength: part.width,
+		partWidth: part.length
+	};
 }
 
 let calculateOmniLayout = function(material, part, options) {
